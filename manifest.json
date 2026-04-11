@@ -1,18 +1,20 @@
 {
-  "name": "Video Player Update",
-  "short_name": "Player Update",
+  "short_name": "Media Player",
+  "name": "Media Engine Player Support",
   "icons": [
     {
       "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "sizes": "192x192"
     },
     {
       "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "sizes": "512x512"
     }
   ],
-  "start_url": "index.html",
-  "display": "standalone"
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#000000"
 }

